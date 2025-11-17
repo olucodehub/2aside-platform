@@ -1,0 +1,284 @@
+# 2-Aside Platform - Docker Compose Configuration
+# For Local Development
+
+version: '3.8'
+
+services:
+  # ========================================
+  # REDIS (Caching, Celery Queue)
+  # ========================================
+  redis:
+    image: redis:7-alpine
+    container_name: 2aside-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    networks:
+      - 2aside-network
+
+  # ========================================
+  # API GATEWAY
+  # ========================================
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    container_name: 2aside-api-gateway
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=redis://redis:6379/0
+      - JWT_SECRET=${JWT_SECRET}
+      - ENVIRONMENT=development
+      - DEBUG=true
+    env_file:
+      - .env
+    volumes:
+      - ./api-gateway:/app
+      - ./shared:/app/shared
+    depends_on:
+      - redis
+    networks:
+      - 2aside-network
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  # ========================================
+  # AUTH SERVICE
+  # ========================================
+  auth-service:
+    build:
+      context: ./services/auth-service
+      dockerfile: Dockerfile
+    container_name: 2aside-auth-service
+    ports:
+      - "8001:8001"
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=redis://redis:6379/0
+      - JWT_SECRET=${JWT_SECRET}
+    env_file:
+      - .env
+    volumes:
+      - ./services/auth-service:/app
+      - ./shared:/app/shared
+    depends_on:
+      - redis
+    networks:
+      - 2aside-network
+    command: uvicorn main:app --host 0.0.0.0 --port 8001 --reload
+
+  # ========================================
+  # USER SERVICE
+  # ========================================
+  user-service:
+    build:
+      context: ./services/user-service
+      dockerfile: Dockerfile
+    container_name: 2aside-user-service
+    ports:
+      - "8002:8002"
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=redis://redis:6379/0
+    env_file:
+      - .env
+    volumes:
+      - ./services/user-service:/app
+      - ./shared:/app/shared
+    depends_on:
+      - redis
+    networks:
+      - 2aside-network
+    command: uvicorn main:app --host 0.0.0.0 --port 8002 --reload
+
+  # ========================================
+  # WALLET SERVICE
+  # ========================================
+  wallet-service:
+    build:
+      context: ./services/wallet-service
+      dockerfile: Dockerfile
+    container_name: 2aside-wallet-service
+    ports:
+      - "8003:8003"
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=redis://redis:6379/0
+    env_file:
+      - .env
+    volumes:
+      - ./services/wallet-service:/app
+      - ./shared:/app/shared
+    depends_on:
+      - redis
+    networks:
+      - 2aside-network
+    command: uvicorn main:app --host 0.0.0.0 --port 8003 --reload
+
+  # ========================================
+  # FUNDING SERVICE
+  # ========================================
+  funding-service:
+    build:
+      context: ./services/funding-service
+      dockerfile: Dockerfile
+    container_name: 2aside-funding-service
+    ports:
+      - "8004:8004"
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/1
+    env_file:
+      - .env
+    volumes:
+      - ./services/funding-service:/app
+      - ./shared:/app/shared
+    depends_on:
+      - redis
+    networks:
+      - 2aside-network
+    command: uvicorn main:app --host 0.0.0.0 --port 8004 --reload
+
+  # ========================================
+  # FUNDING SERVICE - CELERY WORKER
+  # ========================================
+  funding-worker:
+    build:
+      context: ./services/funding-service
+      dockerfile: Dockerfile
+    container_name: 2aside-funding-worker
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+    env_file:
+      - .env
+    volumes:
+      - ./services/funding-service:/app
+      - ./shared:/app/shared
+    depends_on:
+      - redis
+      - funding-service
+    networks:
+      - 2aside-network
+    command: celery -A workers.celery_app worker --loglevel=info
+
+  # ========================================
+  # FUNDING SERVICE - CELERY BEAT (Scheduler)
+  # ========================================
+  funding-beat:
+    build:
+      context: ./services/funding-service
+      dockerfile: Dockerfile
+    container_name: 2aside-funding-beat
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+    env_file:
+      - .env
+    volumes:
+      - ./services/funding-service:/app
+      - ./shared:/app/shared
+    depends_on:
+      - redis
+      - funding-worker
+    networks:
+      - 2aside-network
+    command: celery -A workers.celery_app beat --loglevel=info
+
+  # ========================================
+  # BETTING SERVICE
+  # ========================================
+  betting-service:
+    build:
+      context: ./services/betting-service
+      dockerfile: Dockerfile
+    container_name: 2aside-betting-service
+    ports:
+      - "8005:8005"
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=redis://redis:6379/0
+    env_file:
+      - .env
+    volumes:
+      - ./services/betting-service:/app
+      - ./shared:/app/shared
+    depends_on:
+      - redis
+    networks:
+      - 2aside-network
+    command: uvicorn main:app --host 0.0.0.0 --port 8005 --reload
+
+  # ========================================
+  # CUSTOM BETS SERVICE
+  # ========================================
+  custom-bets-service:
+    build:
+      context: ./services/custom-bets-service
+      dockerfile: Dockerfile
+    container_name: 2aside-custom-bets-service
+    ports:
+      - "8006:8006"
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=redis://redis:6379/0
+    env_file:
+      - .env
+    volumes:
+      - ./services/custom-bets-service:/app
+      - ./shared:/app/shared
+    depends_on:
+      - redis
+    networks:
+      - 2aside-network
+    command: uvicorn main:app --host 0.0.0.0 --port 8006 --reload
+
+  # ========================================
+  # ADMIN SERVICE
+  # ========================================
+  admin-service:
+    build:
+      context: ./services/admin-service
+      dockerfile: Dockerfile
+    container_name: 2aside-admin-service
+    ports:
+      - "8007:8007"
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=redis://redis:6379/0
+    env_file:
+      - .env
+    volumes:
+      - ./services/admin-service:/app
+      - ./shared:/app/shared
+    depends_on:
+      - redis
+    networks:
+      - 2aside-network
+    command: uvicorn main:app --host 0.0.0.0 --port 8007 --reload
+
+# ========================================
+# NETWORKS
+# ========================================
+networks:
+  2aside-network:
+    driver: bridge
+
+# ========================================
+# VOLUMES
+# ========================================
+volumes:
+  redis-data:
+    driver: local

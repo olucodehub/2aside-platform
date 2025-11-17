@@ -1,0 +1,12 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+pyodbc
+python-jose[cryptography]
+passlib[bcrypt]
+python-multipart
+pytz
+APScheduler==3.10.4
+azure-storage-blob
+azure-identity
+python-dotenv
