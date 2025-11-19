@@ -41,6 +41,6 @@ jobs:
     - name: Deploy to Azure Container Apps
       uses: azure/container-apps-deploy-action@v1
       with:
-        containerAppName: 2aside-wallet-service
+        containerAppName: twoaside-walletservice
         resourceGroup: 2aside-resources
         imageToDeploy: ${{ secrets.REGISTRY_LOGIN_SERVER }}/wallet-service:${{ github.sha }}
