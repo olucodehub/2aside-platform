@@ -16,7 +16,7 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /app
 
 # Copy shared module first
-COPY ../shared ./shared/
+COPY shared/ ./shared/
 
 # Copy service requirements and install
 COPY wallet-service/requirements.txt ./
