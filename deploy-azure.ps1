@@ -13,7 +13,7 @@ $walletServiceApp = "twoaside-wallet-service"
 $fundingServiceApp = "twoaside-funding-service"
 
 # Database Configuration
-$databaseUrl = "mssql+pyodbc://Rendezvous:Paparazi101%40@rendezvousdbserver.database.windows.net:1433/RendezvousDB?driver=ODBC+Driver+18+for+SQL+Server&Encrypt=yes&TrustServerCertificate=no&Connection+Timeout=30"
+$databaseUrl = "mssql+pymssql://Rendezvous:Paparazi101%40@rendezvousdbserver.database.windows.net:1433/RendezvousDB?charset=utf8"
 $jwtSecret = "QjQXrItpmN6PVc8nzheCaNkWqWlofnr2zksc2j+z+Mk="
 $jwtAlgorithm = "HS256"
 $accessTokenExpire = "30"
