@@ -226,6 +226,13 @@ async def create_funding_request(
         if not wallet:
             raise WalletNotFoundError()
 
+        # Check if wallet is blocked
+        if wallet.is_blocked:
+            raise HTTPException(
+                status_code=403,
+                detail=f"Your account is blocked. Reason: {wallet.block_reason or 'Contact support for more information.'}"
+            )
+
         # Check if user has set bank account (NAIRA) or wallet address (USDT)
         if currency_upper == "NAIRA":
             if not wallet.bank_details_id:
@@ -335,6 +342,13 @@ async def create_withdrawal_request(
 
         if not wallet:
             raise WalletNotFoundError()
+
+        # Check if wallet is blocked
+        if wallet.is_blocked:
+            raise HTTPException(
+                status_code=403,
+                detail=f"Your account is blocked. Reason: {wallet.block_reason or 'Contact support for more information.'}"
+            )
 
         # Check if user has set bank account (NAIRA) or wallet address (USDT)
         if currency_upper == "NAIRA":
@@ -1010,9 +1024,38 @@ async def upload_proof(
         # Check if proof deadline has passed
         now = datetime.utcnow()
         if pair.proof_deadline and now > pair.proof_deadline:
+            # Block the funder's wallet
+            wallet.is_blocked = True
+            wallet.block_reason = "Failed to upload payment proof within 4 hours. Please contact support at support@2aside.com to resolve this issue and unblock your account."
+
+            # Get the withdrawal request to re-queue it with priority
+            withdrawal_req = db.query(WithdrawalRequest).filter(
+                WithdrawalRequest.id == pair.withdrawal_request_id
+            ).first()
+
+            if withdrawal_req:
+                # Mark as priority for next merge cycle
+                withdrawal_req.is_priority = True
+                withdrawal_req.priority_timestamp = withdrawal_req.opted_in_at or withdrawal_req.requested_at
+                withdrawal_req.failed_match_count += 1
+
+                # Reset the withdrawal request to be available for next cycle
+                withdrawal_req.is_fully_matched = False
+                withdrawal_req.opted_in = False
+                withdrawal_req.merge_cycle_id = None
+                withdrawal_req.matched_at = None
+
+                # Restore the amount that was matched
+                withdrawal_req.amount_remaining += pair.amount
+
+            # Mark the pair as failed
+            pair.funder_missed_deadline = True
+
+            db.commit()
+
             raise HTTPException(
                 status_code=400,
-                detail="Proof upload deadline has passed (4 hours). Your account will be temporarily blocked. Contact admin to unblock."
+                detail="Proof upload deadline has passed (4 hours). Your account has been blocked. Please contact support at support@2aside.com to unblock your account."
             )
 
         # Validate file type
