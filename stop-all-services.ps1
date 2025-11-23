@@ -47,11 +47,10 @@ function Stop-ServiceOnPort {
 Write-Host "Stopping Backend Services..." -ForegroundColor Cyan
 Write-Host ""
 
-Stop-ServiceOnPort -Port 8000 -ServiceName "API Gateway"
-Stop-ServiceOnPort -Port 8001 -ServiceName "Auth Service"
+Stop-ServiceOnPort -Port 8000 -ServiceName "Auth Service"
+Stop-ServiceOnPort -Port 8001 -ServiceName "User Service"
 Stop-ServiceOnPort -Port 8002 -ServiceName "Wallet Service"
-Stop-ServiceOnPort -Port 8003 -ServiceName "User Service"
-Stop-ServiceOnPort -Port 8004 -ServiceName "Funding Service"
+Stop-ServiceOnPort -Port 8003 -ServiceName "Funding Service"
 
 Write-Host ""
 Write-Host "Stopping Frontend..." -ForegroundColor Cyan

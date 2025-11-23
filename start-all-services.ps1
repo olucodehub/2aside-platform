@@ -24,11 +24,10 @@ function Start-Service {
 Write-Host "Starting Backend Services..." -ForegroundColor Cyan
 Write-Host ""
 
-Start-Service -ServiceName "API Gateway" -Path "C:\Dev\Rendezvous\2-Aside\api-gateway" -Command "uvicorn main:app --reload --port 8000" -Port 8000
-Start-Service -ServiceName "Auth Service" -Path "C:\Dev\Rendezvous\2-Aside\auth-service" -Command "uvicorn main:app --reload --port 8001" -Port 8001
+Start-Service -ServiceName "Auth Service" -Path "C:\Dev\Rendezvous\2-Aside\auth-service" -Command "uvicorn main:app --reload --port 8000" -Port 8000
+Start-Service -ServiceName "User Service" -Path "C:\Dev\Rendezvous\2-Aside\user-service" -Command "uvicorn main:app --reload --port 8001" -Port 8001
 Start-Service -ServiceName "Wallet Service" -Path "C:\Dev\Rendezvous\2-Aside\wallet-service" -Command "uvicorn main:app --reload --port 8002" -Port 8002
-Start-Service -ServiceName "User Service" -Path "C:\Dev\Rendezvous\2-Aside\user-service" -Command "uvicorn main:app --reload --port 8003" -Port 8003
-Start-Service -ServiceName "Funding Service (with Auto-Matching)" -Path "C:\Dev\Rendezvous\2-Aside\funding-service" -Command "uvicorn main:app --reload --port 8004" -Port 8004
+Start-Service -ServiceName "Funding Service (with Auto-Matching)" -Path "C:\Dev\Rendezvous\2-Aside\funding-service" -Command "uvicorn main:app --reload --port 8003" -Port 8003
 
 Write-Host ""
 Write-Host "Waiting for backend services to initialize..." -ForegroundColor Yellow
@@ -46,21 +45,19 @@ Write-Host "  All Services Started Successfully!" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Green
 Write-Host ""
 Write-Host "Backend Services:" -ForegroundColor Cyan
-Write-Host "  - API Gateway:      http://localhost:8000" -ForegroundColor White
-Write-Host "  - Auth Service:     http://localhost:8001" -ForegroundColor White
+Write-Host "  - Auth Service:     http://localhost:8000" -ForegroundColor White
+Write-Host "  - User Service:     http://localhost:8001" -ForegroundColor White
 Write-Host "  - Wallet Service:   http://localhost:8002" -ForegroundColor White
-Write-Host "  - User Service:     http://localhost:8003" -ForegroundColor White
-Write-Host "  - Funding Service:  http://localhost:8004" -ForegroundColor White
+Write-Host "  - Funding Service:  http://localhost:8003" -ForegroundColor White
 Write-Host ""
 Write-Host "Frontend:" -ForegroundColor Cyan
 Write-Host "  - Web Application:  http://localhost:3000" -ForegroundColor White
 Write-Host ""
 Write-Host "API Documentation:" -ForegroundColor Cyan
-Write-Host "  - API Gateway:      http://localhost:8000/docs" -ForegroundColor White
-Write-Host "  - Auth Service:     http://localhost:8001/docs" -ForegroundColor White
+Write-Host "  - Auth Service:     http://localhost:8000/docs" -ForegroundColor White
+Write-Host "  - User Service:     http://localhost:8001/docs" -ForegroundColor White
 Write-Host "  - Wallet Service:   http://localhost:8002/docs" -ForegroundColor White
-Write-Host "  - User Service:     http://localhost:8003/docs" -ForegroundColor White
-Write-Host "  - Funding Service:  http://localhost:8004/docs" -ForegroundColor White
+Write-Host "  - Funding Service:  http://localhost:8003/docs" -ForegroundColor White
 Write-Host ""
 Write-Host "NOTE: Celery, Redis, and Celery Beat are NO LONGER NEEDED!" -ForegroundColor Yellow
 Write-Host "      Auto-matching runs inside the Funding Service at 9am, 3pm, 9pm WAT" -ForegroundColor Yellow
