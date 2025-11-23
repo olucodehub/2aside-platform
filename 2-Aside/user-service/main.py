@@ -114,13 +114,15 @@ async def get_current_user_profile(
                         "id": str(naira_wallet.id) if naira_wallet else None,
                         "currency": "NAIRA",
                         "balance": str(naira_wallet.balance) if naira_wallet else "0.00",
-                        "is_blocked": naira_wallet.is_blocked if naira_wallet else False
+                        "is_blocked": naira_wallet.is_blocked if naira_wallet else False,
+                        "block_reason": naira_wallet.block_reason if naira_wallet else None
                     },
                     "usdt": {
                         "id": str(usdt_wallet.id) if usdt_wallet else None,
                         "currency": "USDT",
                         "balance": str(usdt_wallet.balance) if usdt_wallet else "0.00",
-                        "is_blocked": usdt_wallet.is_blocked if usdt_wallet else False
+                        "is_blocked": usdt_wallet.is_blocked if usdt_wallet else False,
+                        "block_reason": usdt_wallet.block_reason if usdt_wallet else None
                     }
                 }
             }

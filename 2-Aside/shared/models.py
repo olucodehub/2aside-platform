@@ -94,6 +94,7 @@ class Wallet(Base):
     consecutive_cancellations = Column(Integer, default=0, nullable=False)
     consecutive_misses = Column(Integer, default=0, nullable=False)
     is_blocked = Column(Boolean, default=False, nullable=False)
+    block_reason = Column(String(500), nullable=True)  # Reason for blocking
 
     # Referral (separate per currency)
     referred_by_wallet_id = Column(UUID(), ForeignKey("wallets.id"), nullable=True)
@@ -250,6 +251,11 @@ class WithdrawalRequest(Base):
     merge_cycle_id = Column(UUID(), nullable=True)  # Which merge cycle was this matched in
     requested_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
     matched_at = Column(DateTime, nullable=True)
+
+    # Priority queue system for re-matching
+    is_priority = Column(Boolean, default=False, nullable=False)  # Priority for next cycle
+    priority_timestamp = Column(DateTime, nullable=True)  # Original join time for priority ordering
+    failed_match_count = Column(Integer, default=0, nullable=False)  # How many times matched but funder failed
 
     # Legacy columns (for backward compatibility with old matching system)
     is_matched = Column(Boolean, default=False, nullable=False)
