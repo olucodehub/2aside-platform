@@ -28,6 +28,9 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [copied, setCopied] = useState(false)
 
+  const currentWallet = getCurrentWallet()
+  const isBlocked = currentWallet?.is_blocked || false
+
   useEffect(() => {
     fetchWalletStats()
   }, [selectedCurrency, user])
@@ -179,20 +182,20 @@ export default function DashboardPage() {
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Link href="/dashboard/funding/request">
-              <Button variant="default" className="w-full">
+            <Link href={isBlocked ? '#' : '/dashboard/funding/request'} className={isBlocked ? 'pointer-events-none' : ''}>
+              <Button variant="default" className="w-full" disabled={isBlocked} title={isBlocked ? 'Account blocked - Cannot perform this action' : ''}>
                 <ArrowDownRight className="mr-2 h-4 w-4" />
                 Fund Wallet
               </Button>
             </Link>
-            <Link href="/dashboard/funding/withdraw">
-              <Button variant="secondary" className="w-full">
+            <Link href={isBlocked ? '#' : '/dashboard/funding/withdraw'} className={isBlocked ? 'pointer-events-none' : ''}>
+              <Button variant="secondary" className="w-full" disabled={isBlocked} title={isBlocked ? 'Account blocked - Cannot perform this action' : ''}>
                 <ArrowUpRight className="mr-2 h-4 w-4" />
                 Withdraw
               </Button>
             </Link>
-            <Link href="/dashboard/games">
-              <Button variant="outline" className="w-full">
+            <Link href={isBlocked ? '#' : '/dashboard/games'} className={isBlocked ? 'pointer-events-none' : ''}>
+              <Button variant="outline" className="w-full" disabled={isBlocked} title={isBlocked ? 'Account blocked - Cannot perform this action' : ''}>
                 <Trophy className="mr-2 h-4 w-4" />
                 Place Bet
               </Button>

@@ -11,13 +11,16 @@ import { formatCurrency, formatDateWAT } from '@/lib/utils'
 import { useWalletStore } from '@/lib/store'
 
 export default function FundingStatusPage() {
-  const { selectedCurrency } = useWalletStore()
+  const { selectedCurrency, getCurrentWallet } = useWalletStore()
   const [fundingRequests, setFundingRequests] = useState<FundingRequest[]>([])
   const [withdrawalRequests, setWithdrawalRequests] = useState<WithdrawalRequest[]>([])
   const [loading, setLoading] = useState(true)
   const [uploadingProof, setUploadingProof] = useState<string | null>(null)
   const [proofFile, setProofFile] = useState<{ [key: string]: File | null }>({})
   const [cancelingRequest, setCancelingRequest] = useState<string | null>(null)
+
+  const currentWallet = getCurrentWallet()
+  const isBlocked = currentWallet?.is_blocked || false
 
   useEffect(() => {
     // Only fetch once when component mounts or currency changes
@@ -257,13 +260,14 @@ export default function FundingStatusPage() {
                                           const file = e.target.files?.[0] || null
                                           setProofFile({ ...proofFile, [matchedUser.pair_id]: file })
                                         }}
-                                        disabled={uploadingProof === matchedUser.pair_id}
+                                        disabled={uploadingProof === matchedUser.pair_id || isBlocked}
                                         className="cursor-pointer"
                                       />
                                       <Button
                                         size="sm"
                                         onClick={() => handleUploadProof(matchedUser.pair_id)}
-                                        disabled={uploadingProof === matchedUser.pair_id || !proofFile[matchedUser.pair_id]}
+                                        disabled={uploadingProof === matchedUser.pair_id || !proofFile[matchedUser.pair_id] || isBlocked}
+                                        title={isBlocked ? 'Account blocked - Cannot upload proof' : ''}
                                       >
                                         <Upload className="h-4 w-4 mr-1" />
                                         {uploadingProof === matchedUser.pair_id ? 'Uploading...' : 'Upload'}
@@ -419,6 +423,8 @@ export default function FundingStatusPage() {
                                       size="sm"
                                       onClick={() => handleConfirmProof(matchedUser.pair_id)}
                                       className="w-full"
+                                      disabled={isBlocked}
+                                      title={isBlocked ? 'Account blocked - Cannot confirm receipt' : ''}
                                     >
                                       <CheckCircle className="h-4 w-4 mr-1" />
                                       Confirm Receipt of {formatCurrency(parseFloat(matchedUser.amount), selectedCurrency)}

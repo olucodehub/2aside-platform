@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { Sidebar } from '@/components/dashboard/sidebar'
 import { CurrencySwitcher } from '@/components/dashboard/currency-switcher'
+import AccountBlockedBanner from '@/components/AccountBlockedBanner'
 import { useAuthStore, useWalletStore } from '@/lib/store'
 
 export default function DashboardLayout({
@@ -59,6 +60,9 @@ export default function DashboardLayout({
 
         {/* Content */}
         <main className="flex-1 overflow-y-auto p-6">
+          {/* Account Blocked Banner */}
+          <AccountBlockedBanner />
+
           {children}
         </main>
       </div>

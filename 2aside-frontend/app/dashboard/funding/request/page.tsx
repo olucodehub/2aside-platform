@@ -25,13 +25,16 @@ function formatTime(seconds: number): string {
 
 export default function FundingRequestPage() {
   const router = useRouter()
-  const { selectedCurrency } = useWalletStore()
+  const { selectedCurrency, getCurrentWallet } = useWalletStore()
   const [amount, setAmount] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
   const [mergeCycle, setMergeCycle] = useState<MergeCycleInfo | null>(null)
   const [timeRemaining, setTimeRemaining] = useState<number>(0)
+
+  const currentWallet = getCurrentWallet()
+  const isBlocked = currentWallet?.is_blocked || false
 
   const presets = selectedCurrency === 'NAIRA' ? NAIRA_PRESETS : USDT_PRESETS
 
@@ -246,7 +249,7 @@ export default function FundingRequestPage() {
                     type="button"
                     variant={amount === preset.toString() ? 'default' : 'outline'}
                     onClick={() => handlePresetClick(preset)}
-                    disabled={loading}
+                    disabled={loading || isBlocked}
                   >
                     {formatCurrency(preset, selectedCurrency)}
                   </Button>
@@ -280,9 +283,10 @@ export default function FundingRequestPage() {
             <Button
               type="submit"
               className="w-full"
-              disabled={loading || !amount || (mergeCycle && !mergeCycle.can_create_request)}
+              disabled={loading || !amount || (mergeCycle && !mergeCycle.can_create_request) || isBlocked}
             >
               {loading ? 'Creating Request...' :
+               isBlocked ? 'Account Blocked - Contact Support' :
                (mergeCycle && !mergeCycle.can_create_request) ? 'Cutoff Passed - Wait for Next Cycle' :
                'Create Funding Request'}
             </Button>

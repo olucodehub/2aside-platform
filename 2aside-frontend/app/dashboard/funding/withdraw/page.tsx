@@ -24,7 +24,7 @@ function formatTime(seconds: number): string {
 
 export default function WithdrawPage() {
   const router = useRouter()
-  const { selectedCurrency } = useWalletStore()
+  const { selectedCurrency, getCurrentWallet } = useWalletStore()
   const [amount, setAmount] = useState('')
   const [balance, setBalance] = useState(0)
   const [loading, setLoading] = useState(false)
@@ -33,6 +33,9 @@ export default function WithdrawPage() {
   const [success, setSuccess] = useState(false)
   const [mergeCycle, setMergeCycle] = useState<MergeCycleInfo | null>(null)
   const [timeRemaining, setTimeRemaining] = useState<number>(0)
+
+  const currentWallet = getCurrentWallet()
+  const isBlocked = currentWallet?.is_blocked || false
 
   const presets = selectedCurrency === 'NAIRA' ? NAIRA_PRESETS : USDT_PRESETS
 
@@ -247,7 +250,7 @@ export default function WithdrawPage() {
                     type="button"
                     variant={amount === preset.toString() ? 'default' : 'outline'}
                     onClick={() => handlePresetClick(preset)}
-                    disabled={loading || preset > balance}
+                    disabled={loading || preset > balance || isBlocked}
                   >
                     {formatCurrency(preset, selectedCurrency)}
                   </Button>
@@ -289,9 +292,10 @@ export default function WithdrawPage() {
             <Button
               type="submit"
               className="w-full"
-              disabled={loading || !amount || parseFloat(amount) > balance || (mergeCycle && !mergeCycle.can_create_request)}
+              disabled={loading || !amount || parseFloat(amount) > balance || (mergeCycle && !mergeCycle.can_create_request) || isBlocked}
             >
               {loading ? 'Creating Request...' :
+               isBlocked ? 'Account Blocked - Contact Support' :
                (mergeCycle && !mergeCycle.can_create_request) ? 'Cutoff Passed - Wait for Next Cycle' :
                'Create Withdrawal Request'}
             </Button>
