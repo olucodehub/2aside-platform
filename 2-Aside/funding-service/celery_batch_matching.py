@@ -184,15 +184,30 @@ def run_merge_cycle(merge_cycle_id: str):
                 FundingRequest.requested_at < cycle.cutoff_time
             ).all()
 
-            withdrawal_requests = db.query(WithdrawalRequest).join(Wallet).filter(
+            # Get withdrawal requests - prioritize users who were affected by failed payments
+            # Priority users (those affected by failed funders) go first, ordered by their original join time
+            priority_withdrawals = db.query(WithdrawalRequest).join(Wallet).filter(
                 Wallet.currency == currency,
                 WithdrawalRequest.is_fully_matched == False,
                 WithdrawalRequest.is_completed == False,
-                WithdrawalRequest.requested_at < cycle.cutoff_time
-            ).all()
+                WithdrawalRequest.requested_at < cycle.cutoff_time,
+                WithdrawalRequest.is_priority == True
+            ).order_by(WithdrawalRequest.priority_timestamp.asc()).all()
+
+            # Regular withdrawal requests ordered by request time (first come, first served)
+            regular_withdrawals = db.query(WithdrawalRequest).join(Wallet).filter(
+                Wallet.currency == currency,
+                WithdrawalRequest.is_fully_matched == False,
+                WithdrawalRequest.is_completed == False,
+                WithdrawalRequest.requested_at < cycle.cutoff_time,
+                WithdrawalRequest.is_priority == False
+            ).order_by(WithdrawalRequest.requested_at.asc()).all()
+
+            # Combine: priority users first, then regular users
+            withdrawal_requests = priority_withdrawals + regular_withdrawals
 
             print(f"  Funding requests: {len(funding_requests)}")
-            print(f"  Withdrawal requests: {len(withdrawal_requests)}")
+            print(f"  Withdrawal requests: {len(withdrawal_requests)} (Priority: {len(priority_withdrawals)}, Regular: {len(regular_withdrawals)})")
 
             cycle.total_funding_requests += len(funding_requests)
             cycle.total_withdrawal_requests += len(withdrawal_requests)
