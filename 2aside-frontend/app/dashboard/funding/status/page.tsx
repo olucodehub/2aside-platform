@@ -16,7 +16,7 @@ export default function FundingStatusPage() {
   const [withdrawalRequests, setWithdrawalRequests] = useState<WithdrawalRequest[]>([])
   const [loading, setLoading] = useState(true)
   const [uploadingProof, setUploadingProof] = useState<string | null>(null)
-  const [proofUrl, setProofUrl] = useState('')
+  const [proofFile, setProofFile] = useState<{ [key: string]: File | null }>({})
   const [cancelingRequest, setCancelingRequest] = useState<string | null>(null)
 
   useEffect(() => {
@@ -47,15 +47,16 @@ export default function FundingStatusPage() {
   }
 
   const handleUploadProof = async (pairId: string) => {
-    if (!proofUrl) {
-      alert('Please enter a proof URL')
+    const file = proofFile[pairId]
+    if (!file) {
+      alert('Please select a file to upload')
       return
     }
 
     try {
       setUploadingProof(pairId)
-      await fundingService.uploadProof(pairId, proofUrl)
-      setProofUrl('')
+      await fundingService.uploadProof(pairId, file)
+      setProofFile({ ...proofFile, [pairId]: null })
       alert('Proof uploaded successfully!')
       fetchRequests()
     } catch (err) {
@@ -250,22 +251,31 @@ export default function FundingStatusPage() {
                                     <div className="flex gap-2">
                                       <Input
                                         id={`proof-${matchedUser.pair_id}`}
-                                        placeholder="Enter proof URL (e.g., image link)"
-                                        value={uploadingProof === matchedUser.pair_id ? proofUrl : ''}
-                                        onChange={(e) => setProofUrl(e.target.value)}
+                                        type="file"
+                                        accept="image/*,.pdf"
+                                        onChange={(e) => {
+                                          const file = e.target.files?.[0] || null
+                                          setProofFile({ ...proofFile, [matchedUser.pair_id]: file })
+                                        }}
                                         disabled={uploadingProof === matchedUser.pair_id}
+                                        className="cursor-pointer"
                                       />
                                       <Button
                                         size="sm"
                                         onClick={() => handleUploadProof(matchedUser.pair_id)}
-                                        disabled={uploadingProof === matchedUser.pair_id}
+                                        disabled={uploadingProof === matchedUser.pair_id || !proofFile[matchedUser.pair_id]}
                                       >
                                         <Upload className="h-4 w-4 mr-1" />
-                                        Upload
+                                        {uploadingProof === matchedUser.pair_id ? 'Uploading...' : 'Upload'}
                                       </Button>
                                     </div>
+                                    {proofFile[matchedUser.pair_id] && (
+                                      <p className="text-xs text-emerald-600">
+                                        Selected: {proofFile[matchedUser.pair_id]?.name}
+                                      </p>
+                                    )}
                                     <p className="text-xs text-gray-500">
-                                      Send {formatCurrency(parseFloat(matchedUser.amount), selectedCurrency)} to {matchedUser.username} and upload proof
+                                      Send {formatCurrency(parseFloat(matchedUser.amount), selectedCurrency)} to {matchedUser.username} and upload payment screenshot
                                     </p>
                                   </div>
                                 ) : (
