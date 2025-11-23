@@ -9,17 +9,15 @@ export default function NextMergeCycleCountdown() {
   const [nextMergeTime, setNextMergeTime] = useState('')
 
   const calculateTimeUntilNextMerge = () => {
-    // WAT is UTC+1
+    // Get current time in WAT timezone (Africa/Lagos = UTC+1)
     const now = new Date()
-    const nowUTC = new Date(now.toISOString())
 
-    // Convert to WAT (UTC+1)
-    const watOffset = 60 // minutes
-    const nowWAT = new Date(nowUTC.getTime() + watOffset * 60 * 1000)
+    // Use Intl API to get time in WAT timezone
+    const watTime = new Date(now.toLocaleString('en-US', { timeZone: 'Africa/Lagos' }))
 
-    const currentHour = nowWAT.getHours()
-    const currentMinute = nowWAT.getMinutes()
-    const currentSecond = nowWAT.getSeconds()
+    const currentHour = watTime.getHours()
+    const currentMinute = watTime.getMinutes()
+    const currentSecond = watTime.getSeconds()
 
     // Merge times in WAT: 9am, 3pm (15:00), 9pm (21:00)
     const mergeTimes = [9, 15, 21]
@@ -35,13 +33,13 @@ export default function NextMergeCycleCountdown() {
       }
     }
 
-    // Calculate next merge date/time
-    const nextMerge = new Date(nowWAT)
-    nextMerge.setDate(nowWAT.getDate() + daysToAdd)
+    // Calculate next merge date/time in WAT
+    const nextMerge = new Date(watTime)
+    nextMerge.setDate(watTime.getDate() + daysToAdd)
     nextMerge.setHours(nextMergeHour, 0, 0, 0)
 
     // Calculate time difference
-    const diff = nextMerge.getTime() - nowWAT.getTime()
+    const diff = nextMerge.getTime() - watTime.getTime()
     const hours = Math.floor(diff / (1000 * 60 * 60))
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
     const seconds = Math.floor((diff % (1000 * 60)) / 1000)
